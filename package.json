@@ -1,7 +1,7 @@
 {
-  "name": "node-typescript-boilerplate",
+  "name": "cart-shark",
   "version": "0.0.0",
-  "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
+  "description": "meal kits x grocery delivery👌",
   "engines": {
     "node": ">= 14.16 <15"
   },
@@ -30,8 +30,6 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   },
-  "author": "Jakub Synowiec <jsynowiec@users.noreply.github.com>",
-  "license": "Apache-2.0",
   "dependencies": {
     "puppeteer": "^10.4.0",
     "tslib": "~2.3.1"
