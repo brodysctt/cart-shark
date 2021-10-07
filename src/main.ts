@@ -18,11 +18,11 @@ import * as puppeteer from 'puppeteer';
     for (const input of inputs) {
       if (input.match(/^email/g)) {
         await page.focus(`#${input}`);
-        await page.keyboard.type('test@test.com');
+        await page.keyboard.type(process.env["EMAIL"]);
       }
       if (input.match(/^password/g)) {
         await page.focus(`#${input}`);
-        await page.keyboard.type('password');
+        await page.keyboard.type(process.env["PASSWORD"]);
       }
     }
 
