@@ -63,7 +63,12 @@ const { EMAIL, PASSWORD } = process.env;
       },
     );
 
-    const encodedImage = '';
+    const imageURL = await recaptchaChallenge.$eval('img', (img) =>
+      img.getAttribute('src'),
+    );
+    const encodedImage = Buffer.from(imageURL).toString('base64');
+    console.log(encodedImage);
+
     await resolveCaptcha(encodedImage, textInstructions);
 
     await incognito.close();
@@ -74,7 +79,11 @@ const { EMAIL, PASSWORD } = process.env;
 
 const resolveCaptcha = async (encodedImage, textInstructions) => {
   console.log(
-    `here be the image and instructions:${encodedImage} ${textInstructions}`,
+    `here be the encoded image:
+    ${encodedImage}
+
+    and here be the text instructions:
+    ${textInstructions}`,
   );
   // const response = await sendCaptchaRequest(encodedImage, textInstructions);
   // TODO: parse response, click tiles as per response, submit solution
