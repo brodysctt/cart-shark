@@ -5,10 +5,10 @@ import * as puppeteer from 'puppeteer';
     const browser = await puppeteer.launch({ devtools: true });
     const incognito = await browser.createIncognitoBrowserContext();
     const page = await incognito.newPage();
+
     await page.goto('https://www.instacart.ca/');
     await page.click('span.css-utfnc');
     await page.click('span.css-utfnc');
-
     await page.waitForSelector('#auth-heading');
 
     const inputs = await page.$$eval('input', (inputs) =>
@@ -25,6 +25,8 @@ import * as puppeteer from 'puppeteer';
         await page.keyboard.type('password');
       }
     }
+
+    await page.click('button[type=submit]');
 
     await incognito.close();
   } catch (err) {
