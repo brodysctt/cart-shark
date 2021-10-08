@@ -1,6 +1,14 @@
 import * as puppeteer from 'puppeteer';
 import * as dotenv from 'dotenv';
-// import { sendCaptchaRequest } from './captchas';
+
+import {
+  // sendCaptchaRequest,
+  // getCaptchaResponse,
+  // CaptchaResponse,
+  createCaptchaRequestData,
+} from './resolveCaptchas';
+
+import { downloadImageBase64 } from './utils';
 
 dotenv.config();
 const { EMAIL, PASSWORD } = process.env;
@@ -48,14 +56,17 @@ const { EMAIL, PASSWORD } = process.env;
 
     // TODO: refactor for retries
     if (recaptchaFrames.length !== 1) {
-      await incognito.close();
+      // await incognito.close();
+      console.log('ending script');
       return;
     }
 
     const recaptchaChallenge = recaptchaFrames[0];
+    await page.waitForTimeout(2000);
 
+    const RECAPTCHA_SELECTOR = 'div.rc-imageselect-desc-no-canonical';
     const textInstructions = await recaptchaChallenge.$eval(
-      'div.rc-imageselect-desc-no-canonical',
+      RECAPTCHA_SELECTOR,
       (div) => {
         const childNodes = div.childNodes;
         const textArr = Array.from(childNodes, (child) => child.textContent);
@@ -66,10 +77,17 @@ const { EMAIL, PASSWORD } = process.env;
     const imageURL = await recaptchaChallenge.$eval('img', (img) =>
       img.getAttribute('src'),
     );
-    const encodedImage = Buffer.from(imageURL).toString('base64');
-    console.log(encodedImage);
 
-    await resolveCaptcha(encodedImage, textInstructions);
+    const encodedImage = await downloadImageBase64(imageURL);
+
+    const captchaRequestData = createCaptchaRequestData(
+      encodedImage,
+      textInstructions,
+    );
+
+    console.log(JSON.stringify(captchaRequestData));
+
+    // await resolveCaptcha(encodedImage, textInstructions);
 
     await incognito.close();
   } catch (err) {
@@ -77,14 +95,37 @@ const { EMAIL, PASSWORD } = process.env;
   }
 })();
 
+/* TODO: Reimplement once testing in Insomnia is complete
 const resolveCaptcha = async (encodedImage, textInstructions) => {
-  console.log(
-    `here be the encoded image:
-    ${encodedImage}
-
-    and here be the text instructions:
-    ${textInstructions}`,
+  console.log('sending captcha request...');
+  const captchaId: string | void = await sendCaptchaRequest(
+    encodedImage,
+    textInstructions,
   );
-  // const response = await sendCaptchaRequest(encodedImage, textInstructions);
+  console.log(`here be the captcha id: ${captchaId}`);
+
+  console.log('initiating response poll...');
+  let response: CaptchaResponse;
+  while (response === 'CAPCHA_NOT_READY') {
+    await delay(10000);
+    console.log('hitting response endpoint...');
+    response = await getCaptchaResponse(captchaId);
+  }
+
+  console.log('out of the while loop');
+
+  // Why can I test for truthiness here, but not in the while block?
+  // Without this check, I can't destructure below 👀
+  if (!response) {
+    console.log('response be void I guess');
+    return;
+  }
+
+  const { request: solution } = response;
+
+  console.log(`here be the solution: ${solution}`);
+  return;
+
   // TODO: parse response, click tiles as per response, submit solution
 };
+*/
