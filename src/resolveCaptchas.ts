@@ -1,9 +1,38 @@
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-// import { delay } from './utils';
+import { delay } from './utils';
 
 dotenv.config();
 const { CAPTCHA_API_KEY } = process.env;
+
+export const resolveCaptchas = async (encodedImage, textInstructions) => {
+  const captchaRequestData = createCaptchaRequestData(
+    encodedImage,
+    textInstructions,
+  );
+  console.log(JSON.stringify(captchaRequestData));
+  console.log('sending captcha request...');
+  const sendCaptchaResponse = await createCaptchaRequest(captchaRequestData);
+  console.dir(sendCaptchaResponse);
+  const { request: requestId } = sendCaptchaResponse;
+
+  console.log('initiating response poll...');
+  let captchaSolutionData: CaptchaSolutionData = {
+    status: 0,
+    request: '',
+  };
+  while (captchaSolutionData.status !== 1) {
+    console.log('waiting 5s...');
+    await delay(5000);
+    captchaSolutionData = await getCaptchaSolution(requestId);
+  }
+  console.log('solution acquired! no longer polling 🎣');
+  const { request: captchaSolution } = captchaSolutionData;
+  console.log(`here be the solution: ${captchaSolution}`);
+
+  // TODO: click tiles as per solution + submit
+  return;
+};
 
 interface CaptchaRequestData {
   method: 'base64';
@@ -13,34 +42,6 @@ interface CaptchaRequestData {
   lang: 'en';
   json: 1;
 }
-
-// TODO: Reimplement once testing in Insomnia is complete
-export const resolveCaptchas = async (encodedImage, textInstructions) => {
-  const captchaRequestData = createCaptchaRequestData(
-    encodedImage,
-    textInstructions,
-  );
-  console.log(JSON.stringify(captchaRequestData));
-
-  console.log('sending captcha request...');
-  const sendCaptchaResponse = await sendCaptchaRequest(captchaRequestData);
-  console.dir(sendCaptchaResponse);
-  // const { request: requestId } = sendCaptchaResponse;
-  // console.log(`here be the captcha id: ${sendCaptchaResponse}`);
-
-  // console.log('initiating response poll...');
-  // let solution;
-  // while (solution === 'CAPCHA_NOT_READY') {
-  //   await delay(10000);
-  //   console.log('hitting response endpoint...');
-  //   solution = await getCaptchaSolution(requestId);
-  // }
-  // console.log('Solution acquired! No longer polling 🎣');
-  // console.log(`here be the solution: ${solution}`);
-  return;
-
-  // TODO: click tiles as per response, submit solution
-};
 
 export const createCaptchaRequestData = (
   encodedImage: string,
@@ -54,33 +55,33 @@ export const createCaptchaRequestData = (
   json: 1,
 });
 
-// interface SendCaptchaReponse {
-//   status: 0 | 1;
-//   request: string;
-// }
-
-const sendCaptchaRequest = async (captchaRequestData: CaptchaRequestData) => {
-  const captchaRequestURL = `http://2captcha.com/in.php?key=${CAPTCHA_API_KEY}`;
-  console.log(captchaRequestURL);
-  const response = await axios.post<CaptchaRequestData>(
-    captchaRequestURL,
-    captchaRequestData,
-    // {
-    //   transformResponse: (res: string): SendCaptchaReponse => JSON.parse(res),
-    // },
-  );
-
-  return response.data;
-};
-
-interface CaptchaSolution {
+interface CreatedCaptchaRequestData {
   status: 0 | 1;
   request: string;
 }
 
-export const getCaptchaSolution = async (captchaId) => {
+const createCaptchaRequest = async (
+  captchaRequestData,
+): Promise<CreatedCaptchaRequestData> => {
+  const captchaRequestURL = `http://2captcha.com/in.php?key=${CAPTCHA_API_KEY}`;
+  const response = await axios.post<CreatedCaptchaRequestData>(
+    captchaRequestURL,
+    captchaRequestData,
+  );
+  const { data } = response;
+  return data;
+};
+
+interface CaptchaSolutionData {
+  status: 0 | 1;
+  request: string;
+}
+
+export const getCaptchaSolution = async (
+  captchaId: string,
+): Promise<CaptchaSolutionData> => {
   const getCaptchaSolutionURL = `http://2captcha.com/res.php?key=${CAPTCHA_API_KEY}&action=get&id=${captchaId}&json=1`;
-  return await axios.get(getCaptchaSolutionURL, {
-    transformResponse: (res: string): CaptchaSolution => JSON.parse(res),
-  });
+  const response = await axios.get<CaptchaSolutionData>(getCaptchaSolutionURL);
+  const { data } = response;
+  return data;
 };

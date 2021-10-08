@@ -1,9 +1,7 @@
 import * as puppeteer from 'puppeteer';
 import * as dotenv from 'dotenv';
 import { downloadImageBase64 } from './utils';
-import {
-  resolveCaptchas /*createCaptchaRequestData*/,
-} from './resolveCaptchas';
+import { resolveCaptchas } from './resolveCaptchas';
 
 dotenv.config();
 const { EMAIL, PASSWORD } = process.env;
@@ -40,7 +38,7 @@ const { EMAIL, PASSWORD } = process.env;
     }
 
     await page.click('button[type=submit]');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     const recaptchaFrames = await page
       .mainFrame()
