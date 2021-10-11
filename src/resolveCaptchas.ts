@@ -5,10 +5,15 @@ import { delay } from './utils';
 dotenv.config();
 const { CAPTCHA_API_KEY } = process.env;
 
-export const resolveCaptchas = async (encodedImage, textInstructions) => {
+export const resolveCaptchas = async (
+  encodedImage,
+  textInstructions,
+  gridSize,
+) => {
   const captchaRequestData = createCaptchaRequestData(
     encodedImage,
     textInstructions,
+    gridSize,
   );
   console.log(JSON.stringify(captchaRequestData));
   console.log('sending captcha request...');
@@ -34,11 +39,15 @@ export const resolveCaptchas = async (encodedImage, textInstructions) => {
   return;
 };
 
+type GridSize = 3 | 4;
+
 interface CaptchaRequestData {
   method: 'base64';
   recaptcha: 1;
   body: string;
   textinstructions: string;
+  recaptcharows: GridSize;
+  recaptchacols: GridSize;
   lang: 'en';
   json: 1;
 }
@@ -46,11 +55,16 @@ interface CaptchaRequestData {
 export const createCaptchaRequestData = (
   encodedImage: string,
   textInstructions: string,
+  gridSize: GridSize,
 ): CaptchaRequestData => ({
   method: 'base64',
   recaptcha: 1,
   body: encodedImage,
   textinstructions: textInstructions,
+  recaptcharows: gridSize,
+  recaptchacols: gridSize,
+  // TODO: previousID
+  // TODO: can_no_answer
   lang: 'en',
   json: 1,
 });

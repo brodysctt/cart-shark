@@ -47,8 +47,14 @@ const { EMAIL, PASSWORD } = process.env;
 
     console.log(`# of google bframes: ${recaptchaFrames.length}`);
 
+    // TODO: Skip ahead to building a cart
+    // TODO: Confirm there's never a case where there's 0 frames and we're not in
+    if (recaptchaFrames.length === 0) {
+      console.log(`ayyy we're in! no recaptcha. let's get sharking 🦈`);
+    }
+
     // TODO: refactor for retries
-    if (recaptchaFrames.length !== 1) {
+    if (recaptchaFrames.length > 1) {
       // await incognito.close();
       console.log('ending script');
       return;
@@ -73,7 +79,12 @@ const { EMAIL, PASSWORD } = process.env;
 
     const encodedImage = await downloadImageBase64(imageURL);
 
-    await resolveCaptchas(encodedImage, textInstructions);
+    const tableClass = await recaptchaChallenge.$eval('table', (table) =>
+      table.getAttribute('class'),
+    );
+    const gridSize = Number(tableClass.slice(-1));
+
+    await resolveCaptchas(encodedImage, textInstructions, gridSize);
 
     // await incognito.close();
   } catch (err) {
