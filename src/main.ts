@@ -1,22 +1,15 @@
-import * as puppeteer from 'puppeteer';
 import * as dotenv from 'dotenv';
 import { downloadImageBase64 } from './utils';
 import { resolveCaptchas } from './resolveCaptchas';
+
+import { createPage } from './createPage';
 
 dotenv.config();
 const { EMAIL, PASSWORD } = process.env;
 
 (async () => {
   try {
-    const browser = await puppeteer.launch({
-      devtools: true,
-      args: [
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process',
-      ],
-    });
-    const incognito = await browser.createIncognitoBrowserContext();
-    const page = await incognito.newPage();
+    const page = await createPage();
     await page.goto('https://www.instacart.ca/');
     await page.click('span.css-utfnc');
     await page.click('span.css-utfnc');
