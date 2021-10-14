@@ -1,54 +1,24 @@
-import * as dotenv from 'dotenv';
 import { downloadImageBase64 } from './utils';
 import { resolveCaptchas } from './resolveCaptchas';
 
 import { createPage } from './createPage';
-
-dotenv.config();
-const { EMAIL, PASSWORD } = process.env;
+import { navigateToRecaptcha } from './navigateToRecaptcha';
 
 (async () => {
   try {
     const page = await createPage();
-    await page.goto('https://www.instacart.ca/');
-    await page.click('span.css-utfnc');
-    await page.click('span.css-utfnc');
-    await page.waitForSelector('#auth-heading');
-
-    const inputs = await page.$$eval('input', (inputs) =>
-      inputs.map((input) => input.id).filter((input) => input),
-    );
-
-    for (const input of inputs) {
-      if (input.match(/^email/g)) {
-        await page.focus(`#${input}`);
-        await page.keyboard.type(EMAIL);
-      }
-      if (input.match(/^password/g)) {
-        await page.focus(`#${input}`);
-        await page.keyboard.type(PASSWORD);
-      }
-    }
-
-    await page.click('button[type=submit]');
-    await page.waitForTimeout(3000);
-
-    const recaptchaFrames = await page
-      .mainFrame()
-      .childFrames()
-      .filter((f) => f.url().match(/.recaptcha\/api2\/bframe/g));
-
+    const recaptchaFrames = await navigateToRecaptcha(page);
     console.log(`# of google bframes: ${recaptchaFrames.length}`);
 
-    // TODO: Skip ahead to building a cart
-    // TODO: Confirm there's never a case where there's 0 frames and we're not in
     if (recaptchaFrames.length === 0) {
       console.log(`ayyy we're in! no recaptcha. let's get sharking 🦈`);
+      await page.close();
+      return;
     }
 
     // TODO: refactor for retries
     if (recaptchaFrames.length > 1) {
-      // await incognito.close();
+      await page.close();
       console.log('ending script');
       return;
     }
@@ -60,7 +30,7 @@ const { EMAIL, PASSWORD } = process.env;
     const textInstructions = await recaptchaChallenge.$eval(
       RECAPTCHA_SELECTOR,
       (div) => {
-        const childNodes = div.childNodes;
+        const childNodes: NodeListOf<Node> = div.childNodes;
         const textArr = Array.from(childNodes, (child) => child.textContent);
         return textArr.join(' ').replace(/\s+/g, ' ');
       },
