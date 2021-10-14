@@ -6,20 +6,17 @@ import { navigateToRecaptcha } from './navigateToRecaptcha';
 
 (async () => {
   try {
-    const page = await createPage();
-    const recaptchaFrames = await navigateToRecaptcha(page);
-    console.log(`# of google bframes: ${recaptchaFrames.length}`);
+    let page;
+    let recaptchaFrames;
+    do {
+      page = await createPage();
+      recaptchaFrames = await navigateToRecaptcha(page);
+      console.log(`# of recaptcha frames: ${recaptchaFrames.length}`);
+    } while (recaptchaFrames.length > 1);
 
     if (recaptchaFrames.length === 0) {
       console.log(`ayyy we're in! no recaptcha. let's get sharking 🦈`);
       await page.close();
-      return;
-    }
-
-    // TODO: refactor for retries
-    if (recaptchaFrames.length > 1) {
-      await page.close();
-      console.log('ending script');
       return;
     }
 
@@ -48,8 +45,6 @@ import { navigateToRecaptcha } from './navigateToRecaptcha';
     const gridSize = Number(tableClass.slice(-1));
 
     await resolveCaptchas(encodedImage, textInstructions, gridSize);
-
-    // await incognito.close();
   } catch (err) {
     console.error(err);
   }
