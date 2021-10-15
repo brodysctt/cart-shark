@@ -5,7 +5,7 @@ import { delay } from './utils';
 dotenv.config();
 const { CAPTCHA_API_KEY } = process.env;
 
-export const resolveCaptchas = async (
+export const getRecaptchaSolution = async (
   encodedImage,
   textInstructions,
   gridSize,
@@ -32,11 +32,13 @@ export const resolveCaptchas = async (
     captchaSolutionData = await getCaptchaSolution(requestId);
   }
   console.log('solution acquired! no longer polling 🎣');
-  const { request: captchaSolution } = captchaSolutionData;
-  console.log(`here be the solution: ${captchaSolution}`);
+  const { request: recaptchaSolution } = captchaSolutionData;
+  console.log(`here be the solution: ${recaptchaSolution}`);
 
-  // TODO: click tiles as per solution + submit
-  return;
+  return recaptchaSolution
+    .replace(/click:/g, '')
+    .split('/')
+    .map((tile) => Number(tile));
 };
 
 type GridSize = 3 | 4;

@@ -1,8 +1,7 @@
-import { downloadImageBase64 } from './utils';
-import { resolveCaptchas } from './resolveCaptchas';
-
 import { createPage } from './createPage';
+import { downloadImageBase64 } from './utils';
 import { navigateToRecaptcha } from './navigateToRecaptcha';
+import { getRecaptchaSolution } from './getRecaptchaSolution';
 
 (async () => {
   try {
@@ -44,7 +43,25 @@ import { navigateToRecaptcha } from './navigateToRecaptcha';
     );
     const gridSize = Number(tableClass.slice(-1));
 
-    await resolveCaptchas(encodedImage, textInstructions, gridSize);
+    const tilesToClick = await getRecaptchaSolution(
+      encodedImage,
+      textInstructions,
+      gridSize,
+    );
+
+    console.dir(tilesToClick);
+
+    const tiles = await recaptchaChallenge.$$('table tbody tr > td');
+
+    for (const tileToClick of tilesToClick) {
+      console.log('about to click some tiles boi');
+      await recaptchaChallenge.evaluateHandle(
+        (tile) => tile.click(),
+        tiles[tileToClick + 1],
+      );
+    }
+
+    // TODO: Handle refreshed images and submit solution
   } catch (err) {
     console.error(err);
   }
