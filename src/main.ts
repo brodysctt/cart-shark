@@ -43,23 +43,24 @@ import { getRecaptchaSolution } from './getRecaptchaSolution';
     );
     const gridSize = Number(tableClass.slice(-1));
 
-    const tilesToClick = await getRecaptchaSolution(
+    const correctTiles = await getRecaptchaSolution(
       encodedImage,
       textInstructions,
       gridSize,
     );
 
-    console.dir(tilesToClick);
+    console.dir(correctTiles);
 
-    const tiles = await recaptchaChallenge.$$('table tbody tr > td');
+    const recaptchaTiles = await recaptchaChallenge.$$('table tbody tr > td');
 
-    for (const tileToClick of tilesToClick) {
-      console.log('about to click some tiles boi');
+    for (const correctTile of correctTiles) {
+      console.log('about to click a tile boi');
       await recaptchaChallenge.evaluateHandle(
-        (tile) => tile.click(),
-        tiles[tileToClick + 1],
+        (recaptchaTile) => recaptchaTile.click(),
+        recaptchaTiles[correctTile - 1],
       );
     }
+    console.log('tiles have been clicked! time to submit this piece 😛');
 
     // TODO: Handle refreshed images and submit solution
   } catch (err) {

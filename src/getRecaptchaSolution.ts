@@ -15,7 +15,6 @@ export const getRecaptchaSolution = async (
     textInstructions,
     gridSize,
   );
-  console.log(JSON.stringify(captchaRequestData));
   console.log('sending captcha request...');
   const sendCaptchaResponse = await createCaptchaRequest(captchaRequestData);
   console.dir(sendCaptchaResponse);
