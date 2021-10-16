@@ -20,11 +20,10 @@ import { getRecaptchaSolution } from './getRecaptchaSolution';
     }
 
     const recaptchaChallenge = recaptchaFrames[0];
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
-    const RECAPTCHA_SELECTOR = 'div.rc-imageselect-desc-no-canonical';
     const textInstructions = await recaptchaChallenge.$eval(
-      RECAPTCHA_SELECTOR,
+      'div.rc-imageselect-instructions',
       (div) => {
         const childNodes: NodeListOf<Node> = div.childNodes;
         const textArr = Array.from(childNodes, (child) => child.textContent);
