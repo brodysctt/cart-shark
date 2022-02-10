@@ -11,14 +11,15 @@ import { downloadImageBase64 } from './utils';
       page = await createPage();
       recaptchaFrames = await navigateToRecaptcha(page);
       console.log(`# of recaptcha frames: ${recaptchaFrames.length}`);
-    } while (recaptchaFrames.length > 0);
+    } while (recaptchaFrames.length > 1);
 
     if (recaptchaFrames.length === 0) {
       console.log(`ayyy we're in! no recaptcha. let's get sharking 🦈`);
       return;
     }
+
     const recaptchaChallenge = recaptchaFrames[0];
-    await page.waitForTimeout(3000);
+    await recaptchaChallenge.waitForTimeout(3000);
 
     const textInstructions = await recaptchaChallenge.$eval(
       'div.rc-imageselect-instructions',
@@ -61,7 +62,6 @@ import { downloadImageBase64 } from './utils';
     await recaptchaChallenge.click(
       'div.verify-button-holder button.rc-button-default.goog-inline-block',
     );
-    // TODO: Let's get sharking 😛
   } catch (err) {
     console.error(err);
   }

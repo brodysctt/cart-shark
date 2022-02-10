@@ -35,9 +35,7 @@
   "dependencies": {
     "axios": "^0.22.0",
     "dotenv": "^10.0.0",
-    "puppeteer": "^10.4.0",
-    "puppeteer-extra": "^3.2.3",
-    "puppeteer-extra-plugin-stealth": "^2.9.0",
+    "puppeteer": "^13.3.0",
     "tslib": "~2.3.1"
   },
   "volta": {

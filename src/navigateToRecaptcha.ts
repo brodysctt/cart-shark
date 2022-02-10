@@ -14,6 +14,9 @@ export const navigateToRecaptcha = async (page) => {
   await page.click('button[type=submit]');
   await page.waitForTimeout(5000);
 
+  const allFrames = await page.mainFrame().childFrames();
+  console.dir(allFrames);
+
   const recaptchaFrames = await page
     .mainFrame()
     .childFrames()
