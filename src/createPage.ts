@@ -1,12 +1,10 @@
-import * as puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 export const createPage = async () => {
+  puppeteer.use(StealthPlugin());
   const browser = await puppeteer.launch({
     devtools: true,
-    args: [
-      '--disable-web-security',
-      '--disable-features=IsolateOrigins,site-per-process',
-    ],
   });
   const incognito = await browser.createIncognitoBrowserContext();
   return await incognito.newPage();

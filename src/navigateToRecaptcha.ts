@@ -8,22 +8,9 @@ export const navigateToRecaptcha = async (page) => {
   await page.click('span.css-utfnc');
   await page.click('span.css-utfnc');
   await page.waitForSelector('#auth-heading');
-
-  const inputs = await page.$$eval('input', (inputs) =>
-    inputs.map((input) => input.id).filter((input) => input),
-  );
-
-  for (const input of inputs) {
-    if (input.match(/^email/g)) {
-      await page.focus(`#${input}`);
-      await page.keyboard.type(EMAIL);
-    }
-    if (input.match(/^password/g)) {
-      await page.focus(`#${input}`);
-      await page.keyboard.type(PASSWORD);
-    }
-  }
-
+  await page.keyboard.type(EMAIL);
+  await page.keyboard.press('Tab');
+  await page.keyboard.type(PASSWORD);
   await page.click('button[type=submit]');
   await page.waitForTimeout(5000);
 

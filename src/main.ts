@@ -1,68 +1,103 @@
-import { createPage } from './createPage';
-import { downloadImageBase64 } from './utils';
-import { navigateToRecaptcha } from './navigateToRecaptcha';
-import { getRecaptchaSolution } from './getRecaptchaSolution';
+import axios from 'axios';
+import * as dotenv from 'dotenv';
 
-(async () => {
-  try {
-    let page;
-    let recaptchaFrames;
-    do {
-      page = await createPage();
-      recaptchaFrames = await navigateToRecaptcha(page);
-      console.log(`# of recaptcha frames: ${recaptchaFrames.length}`);
-    } while (recaptchaFrames.length > 1);
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (recaptchaFrames.length === 0) {
-      console.log(`ayyy we're in! no recaptcha. let's get sharking 🦈`);
-      await page.close();
-      return;
-    }
+dotenv.config();
+const { CAPTCHA_API_KEY } = process.env;
 
-    const recaptchaChallenge = recaptchaFrames[0];
-    await page.waitForTimeout(3000);
+export const getRecaptchaSolution = async (
+  encodedImage,
+  textInstructions,
+  gridSize,
+) => {
+  const captchaRequestData = createCaptchaRequestData(
+    encodedImage,
+    textInstructions,
+    gridSize,
+  );
+  console.log('sending captcha request...');
+  const sendCaptchaResponse = await createCaptchaRequest(captchaRequestData);
+  console.dir(sendCaptchaResponse);
+  const { request: requestId } = sendCaptchaResponse;
 
-    const textInstructions = await recaptchaChallenge.$eval(
-      'div.rc-imageselect-instructions',
-      (div) => {
-        const childNodes: NodeListOf<Node> = div.childNodes;
-        const textArr = Array.from(childNodes, (child) => child.textContent);
-        return textArr.join(' ').replace(/\s+/g, ' ');
-      },
-    );
-
-    const imageURL = await recaptchaChallenge.$eval('img', (img) =>
-      img.getAttribute('src'),
-    );
-
-    const encodedImage = await downloadImageBase64(imageURL);
-
-    const tableClass = await recaptchaChallenge.$eval('table', (table) =>
-      table.getAttribute('class'),
-    );
-    const gridSize = Number(tableClass.slice(-1));
-
-    const correctTiles = await getRecaptchaSolution(
-      encodedImage,
-      textInstructions,
-      gridSize,
-    );
-
-    console.dir(correctTiles);
-
-    const recaptchaTiles = await recaptchaChallenge.$$('table tbody tr > td');
-
-    for (const correctTile of correctTiles) {
-      console.log('about to click a tile boi');
-      await recaptchaChallenge.evaluateHandle(
-        (recaptchaTile) => recaptchaTile.click(),
-        recaptchaTiles[correctTile - 1],
-      );
-    }
-    console.log('tiles have been clicked! time to submit this piece 😛');
-
-    // TODO: Handle refreshed images and submit solution
-  } catch (err) {
-    console.error(err);
+  console.log('initiating response poll...');
+  let captchaSolutionData: CaptchaSolutionData = {
+    status: 0,
+    request: '',
+  };
+  while (captchaSolutionData.status !== 1) {
+    console.log('waiting 5s...');
+    await delay(5000);
+    captchaSolutionData = await getCaptchaSolution(requestId);
   }
-})();
+  console.log('solution acquired! no longer polling 🎣');
+  const { request: recaptchaSolution } = captchaSolutionData;
+  console.log(`here be the solution: ${recaptchaSolution}`);
+
+  return recaptchaSolution
+    .replace(/click:/g, '')
+    .split('/')
+    .map((tile) => Number(tile));
+};
+
+type GridSize = 3 | 4;
+
+interface CaptchaRequestData {
+  method: 'base64';
+  recaptcha: 1;
+  body: string;
+  textinstructions: string;
+  recaptcharows: GridSize;
+  recaptchacols: GridSize;
+  lang: 'en';
+  json: 1;
+}
+
+export const createCaptchaRequestData = (
+  encodedImage: string,
+  textInstructions: string,
+  gridSize: GridSize,
+): CaptchaRequestData => ({
+  method: 'base64',
+  recaptcha: 1,
+  body: encodedImage,
+  textinstructions: textInstructions,
+  recaptcharows: gridSize,
+  recaptchacols: gridSize,
+  // TODO: previousID
+  // TODO: can_no_answer
+  lang: 'en',
+  json: 1,
+});
+
+interface CreatedCaptchaRequestData {
+  status: 0 | 1;
+  request: string;
+}
+
+const createCaptchaRequest = async (
+  captchaRequestData,
+): Promise<CreatedCaptchaRequestData> => {
+  const captchaRequestURL = `http://2captcha.com/in.php?key=${CAPTCHA_API_KEY}`;
+  const response = await axios.post<CreatedCaptchaRequestData>(
+    captchaRequestURL,
+    captchaRequestData,
+  );
+  const { data } = response;
+  return data;
+};
+
+interface CaptchaSolutionData {
+  status: 0 | 1;
+  request: string;
+}
+
+export const getCaptchaSolution = async (
+  captchaId: string,
+): Promise<CaptchaSolutionData> => {
+  const getCaptchaSolutionURL = `http://2captcha.com/res.php?key=${CAPTCHA_API_KEY}&action=get&id=${captchaId}&json=1`;
+  const response = await axios.get<CaptchaSolutionData>(getCaptchaSolutionURL);
+  const { data } = response;
+  return data;
+};

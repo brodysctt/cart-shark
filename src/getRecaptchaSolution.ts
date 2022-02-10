@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import { delay } from './utils';
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 dotenv.config();
 const { CAPTCHA_API_KEY } = process.env;
